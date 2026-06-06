@@ -334,7 +334,7 @@ void MakeAMove(int i) {
 		break;
 	case (8):
 		rightUp();
-		recordMove("Rigth UP ");
+		recordMove("Right UP ");
 		inverseMoveLog = 11;
 		break;
 	case (9):
