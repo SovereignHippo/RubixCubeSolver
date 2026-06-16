@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <string>
+#include <thread>
 
 using namespace std;
 
@@ -12,69 +13,75 @@ using namespace std;
 #define BLUE    "\033[34m"      // Blue text
 #define BOLD    "\033[1m"       // Bold text
 
-void printcube();
-void rotateSide(int side, int times);
-void topLeft();
-void middleLeft();
-void bottomLeft();
-void topRight();
-void middleRight();
-void bottomRight();
-void leftUp();
-void middleUp();
-void rightUp();
-void leftDown();
-void middleDown();
-void rightDown();
-void frontLeft();
-void centerLeft();
-void backLeft();
-void frontRight();
-void centerRight();
-void backRight();
-void MakeAMove(int i);
-bool checkIfSolved();
-void recordMove(string info);
+void printcube(int cube[6][3][3]);
+void rotateSide(int side, int times, int cube[6][3][3]);
+void topLeft(int cube[6][3][3]);
+void middleLeft(int cube[6][3][3]);
+void bottomLeft(int cube[6][3][3]);
+void topRight(int cube[6][3][3]);
+void middleRight(int cube[6][3][3]);
+void bottomRight(int cube[6][3][3]);
+void leftUp(int cube[6][3][3]);
+void middleUp(int cube[6][3][3]);
+void rightUp(int cube[6][3][3]);
+void leftDown(int cube[6][3][3]);
+void middleDown(int cube[6][3][3]);
+void rightDown(int cube[6][3][3]);
+void frontLeft(int cube[6][3][3]);
+void centerLeft(int cube[6][3][3]);
+void backLeft(int cube[6][3][3]);
+void frontRight(int cube[6][3][3]);
+void centerRight(int cube[6][3][3]);
+void backRight(int cube[6][3][3]);
+void MakeAMove(int i, int cube[6][3][3]);
+bool checkIfSolved(int cube[6][3][3]);
+void recordMove(int turnNumber, string& record);
 void recordCube();
 void resetCube();
+void UnMakeAMove(int i, int cube[6][3][3]);
+bool TryToSolve(int turnNumber, int cube[6][3][3], string& record);
+bool TryToSolve(int turnNumber, int cube[6][3][3], string& record, int startingIndex);
+void CopyCube(int newCube[6][3][3], int oldCube[6][3][3]);
+void PrintResults(string record, int startingIndex);
+void StartThread(int startingIndex, int cube[6][3][3],string& record);
 
 
 //MY CUBE
-//int cube[6][3][3] = {
-//	{
-//	{1, 1, 1},
-//	{1, 1, 1},
-//	{1, 1, 1}
-//	}, //1 White
-//	{
-//	{2, 2, 2},
-//	{6, 2, 2},
-//	{4, 2, 2}
-//	}, //2 Green
-//	{
-//	{4, 4, 6},
-//	{5, 3, 3},
-//	{2, 5, 6}
-//	}, //3 Yellow
-//	{
-//	{4, 4, 5},
-//	{4, 4, 4},
-//	{4, 2, 5}
-//	}, //4 Blue
-//	{
-//	{3, 6, 3},
-//	{5, 5, 3},
-//	{5, 5, 5}
-//	}, //5 Orange
-//	{
-//	{6, 6, 6},
-//	{6, 6, 3},
-//	{3, 3, 3}
-//	} //6 Red
-//};
+int baseCube[6][3][3] = {
+	{
+	{1, 1, 1},
+	{1, 1, 1},
+	{1, 1, 1}
+	}, //1 White
+	{
+	{3, 6, 2},
+	{3, 2, 2},
+	{6, 4, 2}
+	}, //2 Green
+	{
+	{3, 3, 5},
+	{3, 3, 4},
+	{5, 5, 3}
+	}, //3 Yellow
+	{
+	{4, 2, 2},
+	{4, 4, 2},
+	{4, 5, 4}
+	}, //4 Blue
+	{
+	{2, 6, 6},
+	{4, 5, 6},
+	{5, 5, 5}
+	}, //5 Orange
+	{
+	{6, 6, 6},
+	{5, 6, 2},
+	{4, 3, 3}
+	} //6 Red
+};
 
 //FULLY SOLVED CUBE
-//int cube[6][3][3] = {
+//int baseCube[6][3][3] = {
 //	{
 //	{1, 1, 1},
 //	{1, 1, 1},
@@ -108,92 +115,84 @@ void resetCube();
 //};
 
 //ALMOST SOLVED CUBE 3-STEPS
-int cube[6][3][3] = {
-	{
-	{5, 4, 4},
-	{5, 1, 6},
-	{1, 1, 6}
-	}, //1 White
-	{
-	{2, 2, 1},
-	{2, 2, 1},
-	{2, 2, 6}
-	}, //2 Green
-	{
-	{2, 2, 6},
-	{5, 3, 6},
-	{5, 3, 6}
-	}, //3 Yellow
-	{
-	{5, 3, 3},
-	{4, 4, 4},
-	{4, 4, 4}
-	}, //4 Blue
-	{
-	{3, 5, 5},
-	{3, 5, 5},
-	{2, 1, 1}
-	}, //5 Orange
-	{
-	{4, 6, 3},
-	{1, 6, 3},
-	{1, 6, 3}
-	} //6 Red
-};
+//int baseCube[6][3][3] = {
+//	{
+//	{1, 1, 5},
+//	{6, 1, 5},
+//	{6, 4, 4}
+//	}, //1 White
+//	{
+//	{2, 2, 5},
+//	{2, 2, 1},
+//	{2, 2, 1}
+//	}, //2 Green
+//	{
+//	{6, 3, 5},
+//	{6, 3, 5},
+//	{2, 2, 5}
+//	}, //3 Yellow
+//	{
+//	{4, 4, 4},
+//	{4, 4, 4},
+//	{6, 3, 3}
+//	}, //4 Blue
+//	{
+//	{1, 5, 3},
+//	{1, 5, 3},
+//	{4, 5, 3}
+//	}, //5 Orange
+//	{
+//	{2, 1, 1},
+//	{3, 6, 6},
+//	{3, 6, 6}
+//	} //6 Red
+//};
 
 
 
 int cube2[6][3][3];
-int TURNLIMIT = 20;
-string record;
+int cubeCopy1[6][3][3];
+int cubeCopy2[6][3][3];
+int cubeCopy3[6][3][3];
+int cubeCopy4[6][3][3];
+int TURNLIMIT = 15;
+string record1;
+string record2;
+string record3;
+string record4;
 
 int inverseMoveLog = -1;
 
 //[0][0][1] is secound sqaure
 //[0][1][0] is first sqare secound row
 
-//My attempt to reduce memory
-int i;
-int j;
-int h;
+////My attempt to reduce memory //Bad for multi-threading
+//int i;
+//int j;
+//int h;
+//
+//int a;
+//int b;
+//int c;
+//
+//int temp;
+//int temp2;
 
-int a;
-int b;
-int c;
+//unsigned long long totalMovesTried = 0;
+int turns = 0;
 
-int temp;
-int temp2;
+int main(int argc, char* argv[]) {
 
-int main() {
-
-	int seed;
-
-	do {
-
-		
-		
-		cout << "Enter seed: ";
-		cin >> seed;
-		
-		
-		if (seed == 0) {
-			cout << RED << "Error: Not a valid number!" << RESET << endl;
-			//cin.clear();
-			//cin.ignore(numeric_limits<streamsize>::max(), '\n');
-			
-		}
-
-	} while (seed == 0);
-	
-	
-	srand(seed);
+	if (argc > 2) {
+		cerr << RED << "Error: Too many arguments, only argument is seed" << RESET << endl;
+	}
 	
 
 	int count = 0;
 	for (int i = 0; i < 6; i++) {
 		for (int j = 0; j < 3; j++){
 			for (int h = 0; h < 3; h++) {
-				count += cube[i][j][h];
+				count += baseCube[i][j][h];
 			}
 		}
 	}
@@ -203,194 +202,369 @@ int main() {
 	}
 	recordCube();
 	//printcube();
-	int turns = 0;
-	int countAgain = 0;
+	
+	
 	int counter = 0;
 
 	cout << GREEN << "Begining Simulation" << RESET << endl;
 
-	do {
-		if (checkIfSolved()) {
-			break;
-		}
-		turns = 0;
-		record = "";
-		resetCube();
+	record1 = "";
+	record2 = "";
+	record3 = "";
+	record4 = "";
 
-		if (countAgain < 1000000) {
-			cout << "\rAttempt #" << countAgain;
-		}
 
-		//cout << "AGAIN!! - "  << countAgain << endl;
-		if (countAgain % 1000000 == 0) {
-			cout << "\rAttempt #" << countAgain;
-		}
-		
+	CopyCube(cubeCopy1, baseCube);
+	CopyCube(cubeCopy2, baseCube);
+	CopyCube(cubeCopy3, baseCube);
+	CopyCube(cubeCopy4, baseCube);
 
-		countAgain++;
-		
-		
-		do {
-			
-			MakeAMove(rand() % 18);
-			turns++;
-			if (checkIfSolved()) {
-				
-				break;
-			}
+	thread t(StartThread, 1, cubeCopy1, ref(record1));
+	thread t2(StartThread, 3, cubeCopy2, ref(record2));
+	thread t3(StartThread, 5, cubeCopy3, ref(record3));
+	thread t4(StartThread, 7, cubeCopy4, ref(record4));
 
-		} while (turns < TURNLIMIT);
-
-		
-		
-	} while (!checkIfSolved());
-
+	t.join();
+	t2.detach();
+	t3.detach();
+	t4.detach();
+	
 	
 
-	cout << endl << GREEN <<"Congratulations! Solved in " << turns << " steps" << RESET << endl << record << endl;
+	//do {
+	//	if (checkIfSolved()) {
+	//		break;
+	//	}
+	//	turns = 0;
+	//	record = "";
+	//	resetCube();
+
+	//	if (countAgain < 1000000) {
+	//		cout << "\rAttempt #" << countAgain;
+	//	}
+
+	//	//cout << "AGAIN!! - "  << countAgain << endl;
+	//	if (countAgain % 100000 == 0) {
+	//		cout << "\rAttempt #" << countAgain;
+	//	}
+	//	
+
+	//	countAgain++;
+	//	
+	//	
+
+
+	//	/*do {
+	//		
+	//		MakeAMove(rand() % 18);
+	//		turns++;
+	//		if (checkIfSolved()) {
+	//			
+	//			break;
+	//		}
+
+	//	} while (turns < TURNLIMIT);*/
+
+		
+		
+	/*} while (!checkIfSolved());*/
+
+	
+	cerr << "Main has finished" << endl;
+	
+
+	return 0;
+}
+
+void StartThread(int startingIndex, int cube[6][3][3],string& record) {
+	if (TryToSolve(1, cube, record, startingIndex)) {
+		cerr << "Winner: " << startingIndex << endl;
+		PrintResults(record, startingIndex);
+		printcube(cube);
+	}
+	
+}
+
+bool TryToSolve(int turnNumber, int cube[6][3][3],string& record) {
+	return TryToSolve(turnNumber, cube, record, 0);
+}
+
+bool TryToSolve(int turnNumber, int cube[6][3][3], string& record, int startingIndex) {
+	if (turnNumber > TURNLIMIT) return false;
+
+	if (turnNumber == 1 && startingIndex !=0) {
+		cerr << "progress-" << startingIndex << ": " << 0 << "%" <<endl;
+	}
+
+	for (int i = startingIndex; i < 18; i++) {
+
+		MakeAMove(i, cube);
+		//totalMovesTried++;
+		
+		if (checkIfSolved(cube)) {
+			recordMove(i, record);
+			cerr << endl << "SOLVED IT! at " << i << endl;
+			return true;
+		}
+		if (TryToSolve((turnNumber + 1), cube, record)) {
+			recordMove(i, record);
+			cerr << "They Solved it at my " << i << endl;
+			return true;
+		}
+		UnMakeAMove(i, cube);
+
+		if (turnNumber == 1 && startingIndex != 0) {
+			cerr << "progress-"<< startingIndex <<": " << ((i + 1) / 18) * 100 << " % "<<endl;
+		}
+		
+	}
+	
+	
+	
+	
+	return false;
+}
+
+void CopyCube(int newCube[6][3][3], int oldCube[6][3][3]) {
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int h = 0; h < 3; h++) {
+				newCube[i][j][h] = oldCube[i][j][h];
+			}
+		}
+	}
+}
+
+void PrintResults(string record, int startingIndex) {
+	cerr << endl << GREEN << "Congratulations! Solved!" << RESET << endl << record << endl;
 
 	string outputFileName = "RubixCubeSolution";
 
-	string OUTPUTFILE = outputFileName + "-" + to_string(seed) + ".txt";
+	string OUTPUTFILE = outputFileName + "-" + to_string(startingIndex) + ".txt";
 
-	cout << "Solution Saved to " << BLUE << OUTPUTFILE << RESET << endl;
+	cerr << "Solution Saved to " << BLUE << OUTPUTFILE << RESET << endl;
 
 	ofstream MyFile(OUTPUTFILE);
 
-	MyFile << "Solved in " << turns << " steps, after " << countAgain << " iterations" << endl << record;
+	MyFile << "Solved in " << turns << " steps" << endl << record;
 
 	MyFile.close();
 
 	//All moves are from the perspective of White head on and Green to the left
-
-	return 0;
 }
+
+
+
 void recordCube() {
 	
-	for ( i = 0; i < 6; i++) {
-		for ( j = 0; j < 3; j++) {
-			for ( h = 0; h < 3; h++) {
-				cube2[i][j][h] = cube[i][j][h];
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int h = 0; h < 3; h++) {
+				cube2[i][j][h] = baseCube[i][j][h];
 			}
 		}
 	}
 }
 void resetCube() {
-	for ( i = 0; i < 6; i++) {
-		for ( j = 0; j < 3; j++) {
-			for ( h = 0; h < 3; h++) {
-				cube[i][j][h] = cube2[i][j][h];
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int h = 0; h < 3; h++) {
+				baseCube[i][j][h] = cube2[i][j][h];
 			}
 		}
 	}
 }
 
-void MakeAMove(int i) {
-	if (inverseMoveLog == i) {
-		MakeAMove(rand() % 18);
-		return;
-	}
+void MakeAMove(int i, int cube[6][3][3]) {
+	//if (inverseMoveLog == i) {
+	//	//MakeAMove(rand() % 18);
+	//	return;
+	//}
 	switch (i)
 	{
 	case (0):
-		topLeft();
-		recordMove("Top Left ");
+		topLeft(cube);
+		//recordMove("Top Left ");
 		inverseMoveLog = 3;
 		break;
 	case (1):
-		middleLeft();
-		recordMove("Middle Left ");
-		inverseMoveLog = 4;
+		//middleLeft(cube);
+		//recordMove("Middle Left ");
+		//inverseMoveLog = 4;
 		break;
 	case (2):
-		bottomLeft();
-		recordMove("Bottom Left ");
+		bottomLeft(cube);
+		//recordMove("Bottom Left ");
 		inverseMoveLog = 5;
 		break;
 	case (3):
-		topRight();
-		recordMove("Top Right ");
+		topRight(cube);
+		//recordMove("Top Right ");
 		inverseMoveLog = 0;
 		break;
 	case (4):
-		middleRight();
-		recordMove("Middle Right ");
-		inverseMoveLog = 1;
+		//middleRight(cube);
+		//recordMove("Middle Right ");
+		//inverseMoveLog = 1;
 		break;
 	case (5):
-		bottomRight();
-		recordMove("Bottom Right ");
+		bottomRight(cube);
+		//recordMove("Bottom Right ");
 		inverseMoveLog = 2;
 		break;
 	case(6):
-		leftUp();
-		recordMove("Left UP ");
+		leftUp(cube);
+		//recordMove("Left UP ");
 		inverseMoveLog = 9;
 		break;
 	case (7):
-		middleUp();
-		recordMove("Middle UP ");
-		inverseMoveLog = 10;
+		//middleUp(cube);
+		//recordMove("Middle UP ");
+		//inverseMoveLog = 10;
 		break;
 	case (8):
-		rightUp();
-		recordMove("Right UP ");
+		rightUp(cube);
+		//recordMove("Right UP ");
 		inverseMoveLog = 11;
 		break;
 	case (9):
-		leftDown();
-		recordMove("left Down ");
+		leftDown(cube);
+		//recordMove("left Down ");
 		inverseMoveLog = 6;
 		break;
 	case(10):
-		middleDown();
-		recordMove("Middle Down ");
-		inverseMoveLog = 7;
+		//middleDown(cube);
+		//recordMove("Middle Down ");
+		//inverseMoveLog = 7;
 		break;
 	case(11):
-		rightDown();
-		recordMove("Right Down ");
+		rightDown(cube);
+		//recordMove("Right Down ");
 		inverseMoveLog = 8;
 		break;
 	case(12):
-		frontLeft();
-		recordMove("Front Left ");
-		inverseMoveLog = 15;
+		//frontLeft(cube);
+		//recordMove("Front Left ");
+		//inverseMoveLog = 15;
 		break;
 	case(13):
-		centerLeft();
-		recordMove("Center Left ");
+		centerLeft(cube);
+		//recordMove("Center Left ");
 		inverseMoveLog = 16;
 		break;
 	case(14):
-		backLeft();
-		recordMove("Back Left ");
+		backLeft(cube);
+		//recordMove("Back Left ");
 		inverseMoveLog = 17;
 		break;
 	case(15):
-		frontRight();
-		recordMove("Front Right ");
-		inverseMoveLog = 12;
+		//frontRight(cube);
+		//recordMove("Front Right ");
+		//inverseMoveLog = 12;
 		break;
 	case(16):
-		centerRight();
-		recordMove("Center Right ");
+		centerRight(cube);
+		//recordMove("Center Right ");
 		inverseMoveLog = 13;
 		break;
 	case(17):
-		backRight();
-		recordMove("Back Right ");
+		backRight(cube);
+		//recordMove("Back Right ");
 		inverseMoveLog = 14;
+		break;
 	default:
 		break;
 	}
 }
 
-bool checkIfSolved() {
-	 temp2 = cube[0][0][0];
-	for ( i = 0; i < 6; i++) {
-		for ( j = 0; j < 3; j++) {
-			for ( h = 0; h < 3; h++) {
+void UnMakeAMove(int i, int cube[6][3][3]) {
+	
+	
+	switch (i)
+	{
+	case (3):
+		topLeft(cube);
+		
+		break;
+	case (4):
+		//middleLeft(cube);
+		
+		break;
+	case (5):
+		bottomLeft(cube);
+		
+		break;
+	case (0):
+		topRight(cube);
+		
+		break;
+	case (1):
+		//middleRight(cube);
+		
+		break;
+	case (2):
+		bottomRight(cube);
+		
+		break;
+	case(9):
+		leftUp(cube);
+		
+		break;
+	case (10):
+		//middleUp(cube);
+		
+		break;
+	case (11):
+		rightUp(cube);
+		
+		break;
+	case (6):
+		leftDown(cube);
+		
+		break;
+	case(7):
+		//middleDown(cube);
+		
+		break;
+	case(8):
+		rightDown(cube);
+		
+		break;
+	case(15):
+		//frontLeft(cube);
+		
+		break;
+	case(16):
+		centerLeft(cube);
+		
+		break;
+	case(17):
+		backLeft(cube);
+		
+		break;
+	case(12):
+		//frontRight(cube);
+		
+		break;
+	case(13):
+		centerRight(cube);
+		
+		
+		break;
+	case(14):
+		backRight(cube);
+		
+		break;
+	default:
+		break;
+	}
+}
+
+bool checkIfSolved(int cube[6][3][3]) {
+	int temp2 = cube[0][0][0];
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int h = 0; h < 3; h++) {
 				//cout << i << ", " << j << ", " << h << endl;
 				if (cube[i][j][h] != temp2) {
 					return false;
@@ -404,17 +578,110 @@ bool checkIfSolved() {
 	return true;
 }
 
-void recordMove(string info) {
-	record += info;
-	record += "\n";
+void recordMove(int moveNumber,string& record) {
+	switch (moveNumber)
+	{
+	case (0):
+		
+		record = "Top Left \n" + record;
+		
+		break;
+	case (1):
+		//record = "Middle Left \n" + record;
+		
+		break;
+	case (2):
+		record = "Bottom Left \n" + record;
+		
+		break;
+	case (3):
+		record = "Top Right \n" + record;
+		//recordMove("Top Right ");
+		
+		break;
+	case (4):
+		//record = "Middle Right \n" + record;
+		//recordMove("Middle Right ");
+		
+		break;
+	case (5):
+		record = "Bottom Right \n" + record;
+		//recordMove("Bottom Right ");
+		
+		break;
+	case(6):
+		record = "Left Up \n" + record;
+		//recordMove("Left UP ");
+		
+		break;
+	case (7):
+		//record = "Middle Up \n" + record;
+		//recordMove("Middle UP ");
+		
+		break;
+	case (8):
+		record = "Right Up \n" + record;
+		//recordMove("Right UP ");
+		
+		break;
+	case (9):
+		record = "Left Down \n" + record;
+		//recordMove("left Down ");
+		
+		break;
+	case(10):
+		//record = "Middle Down \n" + record;
+		//recordMove("Middle Down ");
+		
+		break;
+	case(11):
+		record = "Right Down \n" + record;
+		//recordMove("Right Down ");
+		
+		break;
+	case(12):
+		//record = "Front Left \n" + record;
+		//recordMove("Front Left ");
+		
+		break;
+	case(13):
+		record = "Center Left \n" + record;
+		//recordMove("Center Left ");
+		
+		break;
+	case(14):
+		record = "Back Left \n" + record;
+		//recordMove("Back Left ");
+		
+		break;
+	case(15):
+		//record = "Front Right \n" + record;
+		//recordMove("Front Right ");
+		
+		break;
+	case(16):
+		record = "Center Right \n" + record;
+		//recordMove("Center Right ");
+		
+		break;
+	case(17):
+		record = "Back Right \n" + record;
+		//recordMove("Back Right ");
+		
+	default:
+		break;
+	}
+
+	turns++;
+	
 	//cout << info << endl;
 }
 
-void printcube() {
+void printcube(int cube[6][3][3]) {
 	cout << "printing cube" << endl;
-	for ( i = 0; i < 6; i++) {
-		for ( j = 0; j < 3; j++) {
-			for ( h = 0; h < 3; h++) {
+	for (int i = 0; i < 6; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int h = 0; h < 3; h++) {
 				cout << cube[i][j][h] << ", ";
 			}
 			cout << endl;
@@ -423,14 +690,13 @@ void printcube() {
 	}
 }
 
-void rotateSide(int side, int times) {
+void rotateSide(int side, int times, int cube[6][3][3]) {
 	//rotate counterclockwise do times = 1
-	//rotate clockwise do times = 3
-	for ( h = 0; h < times; h++) {
+	for (int h = 0; h < times; h++) {
 
-		for ( i = 0; i < 3 / 2; i++) {
-			for ( j = i; j < 3 - i - 1; j++) {
-				 temp = cube[side][i][j];
+		for (int i = 0; i < 3 / 2; i++) {
+			for (int j = i; j < 3 - i - 1; j++) {
+				int temp = cube[side][i][j];
 				cube[side][i][j] = cube[side][j][3 - 1 - i];
 				cube[side][j][3 - 1 - i] = cube[side][3 - 1 - i][3 - 1 - j];
 				cube[side][3 - 1 - i][3 - 1 - j] = cube[side][3 - 1 - j][i];
@@ -442,12 +708,12 @@ void rotateSide(int side, int times) {
 	}
 }
 //left and right
-void topLeft() {
+void topLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][0];
-	b = cube[0][0][1];
-	c = cube[0][0][2];
+	int a = cube[0][0][0];
+	int b = cube[0][0][1];
+	int c = cube[0][0][2];
 	//side 3 to side 0
 	cube[0][0][0] = cube[3][0][0];
 	cube[0][0][1] = cube[3][0][1];
@@ -465,14 +731,14 @@ void topLeft() {
 	cube[1][0][1] = b;
 	cube[1][0][2] = c;
 	//Roate top clockwise
-	rotateSide(4, 3);
+	rotateSide(4, 3, cube);
 }
-void middleLeft() {
+void middleLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][1][0];
-	b = cube[0][1][1];
-	c = cube[0][1][2];
+	int a = cube[0][1][0];
+	int b = cube[0][1][1];
+	int c = cube[0][1][2];
 	//side 3 to side 0
 	cube[0][1][0] = cube[3][1][0];
 	cube[0][1][1] = cube[3][1][1];
@@ -492,12 +758,12 @@ void middleLeft() {
 	//Roate top couterclockwise
 	
 }
-void bottomLeft() {
+void bottomLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][2][0];
-	b = cube[0][2][1];
-	c = cube[0][2][2];
+	int a = cube[0][2][0];
+	int b = cube[0][2][1];
+	int c = cube[0][2][2];
 	//side 3 to side 0
 	cube[0][2][0] = cube[3][2][0];
 	cube[0][2][1] = cube[3][2][1];
@@ -515,14 +781,14 @@ void bottomLeft() {
 	cube[1][2][1] = b;
 	cube[1][2][2] = c;
 	//Roate bottom couterclockwise
-	rotateSide(5, 1);
+	rotateSide(5, 1, cube);
 }
-void topRight() {
+void topRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][0];
-	b = cube[0][0][1];
-	c = cube[0][0][2];
+	int a = cube[0][0][0];
+	int b = cube[0][0][1];
+	int c = cube[0][0][2];
 	//side 1 to side 0
 	cube[0][0][0] = cube[1][0][0];
 	cube[0][0][1] = cube[1][0][1];
@@ -540,14 +806,14 @@ void topRight() {
 	cube[3][0][1] = b;
 	cube[3][0][2] = c;
 	//Roate bottom couterclockwise
-	rotateSide(4, 1);
+	rotateSide(4, 1, cube);
 }
-void middleRight() {
+void middleRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][1][0];
-	b = cube[0][1][1];
-	c = cube[0][1][2];
+	int a = cube[0][1][0];
+	int b = cube[0][1][1];
+	int c = cube[0][1][2];
 	//side 1 to side 0
 	cube[0][1][0] = cube[1][1][0];
 	cube[0][1][1] = cube[1][1][1];
@@ -566,12 +832,12 @@ void middleRight() {
 	cube[3][1][2] = c;
 	
 }
-void bottomRight() {
+void bottomRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][2][0];
-	b = cube[0][2][1];
-	c = cube[0][2][2];
+	int a = cube[0][2][0];
+	int b = cube[0][2][1];
+	int c = cube[0][2][2];
 	//side 1 to side 0
 	cube[0][2][0] = cube[1][2][0];
 	cube[0][2][1] = cube[1][2][1];
@@ -589,16 +855,16 @@ void bottomRight() {
 	cube[3][2][1] = b;
 	cube[3][2][2] = c;
 	//Roate bottom clockwise
-	rotateSide(5, 3);
+	rotateSide(5, 3, cube);
 }
 
 // up and down
-void leftUp() {
+void leftUp(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][0];
-	b = cube[0][1][0];
-	c = cube[0][2][0];
+	int a = cube[0][0][0];
+	int b = cube[0][1][0];
+	int c = cube[0][2][0];
 	//side 5 to side 0
 	cube[0][0][0] = cube[5][0][0];
 	cube[0][1][0] = cube[5][1][0];
@@ -616,14 +882,14 @@ void leftUp() {
 	cube[4][1][0] = b;
 	cube[4][2][0] = c;
 	//Roate 1 counterclockwise
-	rotateSide(1, 1);
+	rotateSide(1, 1, cube);
 }
-void middleUp() {
+void middleUp(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][1];
-	b = cube[0][1][1];
-	c = cube[0][2][1];
+	int a = cube[0][0][1];
+	int b = cube[0][1][1];
+	int c = cube[0][2][1];
 	//side 5 to side 0
 	cube[0][0][1] = cube[5][0][1];
 	cube[0][1][1] = cube[5][1][1];
@@ -642,12 +908,12 @@ void middleUp() {
 	cube[4][2][1] = c;
 	
 }
-void rightUp() {
+void rightUp(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][2];
-	b = cube[0][1][2];
-	c = cube[0][2][2];
+	int a = cube[0][0][2];
+	int b = cube[0][1][2];
+	int c = cube[0][2][2];
 	//side 5 to side 0
 	cube[0][0][2] = cube[5][0][2];
 	cube[0][1][2] = cube[5][1][2];
@@ -665,14 +931,14 @@ void rightUp() {
 	cube[4][1][2] = b;
 	cube[4][2][2] = c;
 	//Roate 3 clockwise
-	rotateSide(3, 3);
+	rotateSide(3, 3, cube);
 }
-void leftDown() {
+void leftDown(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][0];
-	b = cube[0][1][0];
-	c = cube[0][2][0];
+	int a = cube[0][0][0];
+	int b = cube[0][1][0];
+	int c = cube[0][2][0];
 	//side 4 to side 0
 	cube[0][0][0] = cube[4][0][0];
 	cube[0][1][0] = cube[4][1][0];
@@ -690,14 +956,14 @@ void leftDown() {
 	cube[5][1][0] = b;
 	cube[5][2][0] = c;
 	//Roate 1 clockwise
-	rotateSide(1, 3);
+	rotateSide(1, 3, cube);
 }
-void middleDown() {
+void middleDown(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][1];
-	b = cube[0][1][1];
-	c = cube[0][2][1];
+	int a = cube[0][0][1];
+	int b = cube[0][1][1];
+	int c = cube[0][2][1];
 	//side 4 to side 0
 	cube[0][0][1] = cube[4][0][1];
 	cube[0][1][1] = cube[4][1][1];
@@ -716,12 +982,12 @@ void middleDown() {
 	cube[5][2][1] = c;
 
 }
-void rightDown() {
+void rightDown(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 0
-	a = cube[0][0][2];
-	b = cube[0][1][2];
-	c = cube[0][2][2];
+	int a = cube[0][0][2];
+	int b = cube[0][1][2];
+	int c = cube[0][2][2];
 	//side 4 to side 0
 	cube[0][0][2] = cube[4][0][2];
 	cube[0][1][2] = cube[4][1][2];
@@ -739,16 +1005,16 @@ void rightDown() {
 	cube[5][1][2] = b;
 	cube[5][2][2] = c;
 	//Roate 3 counterclockwise
-	rotateSide(3, 1);
+	rotateSide(3, 1, cube);
 }
 
 //depth turns
-void frontLeft() {
+void frontLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][0];
-	b = cube[3][1][0];
-	c = cube[3][2][0];
+	int a = cube[3][0][0];
+	int b = cube[3][1][0];
+	int c = cube[3][2][0];
 	//side 5 to side 3
 	cube[3][0][0] = cube[5][0][2];
 	cube[3][1][0] = cube[5][0][1];
@@ -766,14 +1032,14 @@ void frontLeft() {
 	cube[4][2][1] = b;
 	cube[4][2][2] = c;
 	//Roate 0 counterclockwise
-	rotateSide(0, 1);
+	rotateSide(0, 1, cube);
 }
-void centerLeft() {
+void centerLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][1];
-	b = cube[3][1][1];
-	c = cube[3][2][1];
+	int a = cube[3][0][1];
+	int b = cube[3][1][1];
+	int c = cube[3][2][1];
 	//side 5 to side 3
 	cube[3][0][1] = cube[5][1][2];
 	cube[3][1][1] = cube[5][1][1];
@@ -792,12 +1058,12 @@ void centerLeft() {
 	cube[4][1][2] = c;
 	
 }
-void backLeft() {
+void backLeft(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][2];
-	b = cube[3][1][2];
-	c = cube[3][2][2];
+	int a = cube[3][0][2];
+	int b = cube[3][1][2];
+	int c = cube[3][2][2];
 	//side 5 to side 3
 	cube[3][0][2] = cube[5][2][2];
 	cube[3][1][2] = cube[5][2][1];
@@ -815,14 +1081,14 @@ void backLeft() {
 	cube[4][0][1] = b;
 	cube[4][0][2] = c;
 	//Roate 2 clockwise
-	rotateSide(2, 3);
+	rotateSide(2, 3, cube);
 }
-void frontRight() {
+void frontRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][0];
-	b = cube[3][1][0];
-	c = cube[3][2][0];
+	int a = cube[3][0][0];
+	int b = cube[3][1][0];
+	int c = cube[3][2][0];
 	//side 4 to side 3
 	cube[3][0][0] = cube[4][2][0];
 	cube[3][1][0] = cube[4][2][1];
@@ -840,14 +1106,14 @@ void frontRight() {
 	cube[5][0][1] = b;
 	cube[5][0][2] = c;
 	//Roate 0 clockwise
-	rotateSide(0, 3);
+	rotateSide(0, 3, cube);
 }
-void centerRight() {
+void centerRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][1];
-	b = cube[3][1][1];
-	c = cube[3][2][1];
+	int a = cube[3][0][1];
+	int b = cube[3][1][1];
+	int c = cube[3][2][1];
 	//side 4 to side 3
 	cube[3][0][1] = cube[4][1][0];
 	cube[3][1][1] = cube[4][1][1];
@@ -865,12 +1131,12 @@ void centerRight() {
 	cube[5][1][1] = b;
 	cube[5][1][0] = c;
 }
-void backRight() {
+void backRight(int cube[6][3][3]) {
 	//int a, b, c;
 	//save side 3
-	a = cube[3][0][2];
-	b = cube[3][1][2];
-	c = cube[3][2][2];
+	int a = cube[3][0][2];
+	int b = cube[3][1][2];
+	int c = cube[3][2][2];
 	//side 4 to side 3
 	cube[3][0][2] = cube[4][0][0];
 	cube[3][1][2] = cube[4][0][1];
@@ -888,5 +1154,5 @@ void backRight() {
 	cube[5][2][1] = b;
 	cube[5][2][0] = c;
 	//Roate 2 counterclockwise
-	rotateSide(2, 1);
+	rotateSide(2, 1, cube);
 }
